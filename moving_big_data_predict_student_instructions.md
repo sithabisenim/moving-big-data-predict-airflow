@@ -323,7 +323,7 @@ When creating the data pipeline, you will need to store multiple artefacts for d
 1. Create a **topic** and **subscription** for the pipeline notification.
    - You may create two subscriptions for your notifications:
       - The first can be your personal email, which you can use when debugging your pipeline.
-      - The second should be the edsa.predicts@explore-ai.net endpoint so that your predict can be marked.
+      - The second should be the predicts@sandtech.com endpoint so that your predict can be marked.
 
    <br>
 
