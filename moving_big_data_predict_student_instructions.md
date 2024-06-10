@@ -329,7 +329,7 @@ When creating the data pipeline, you will need to store multiple artefacts for d
 
    > 📝 &nbsp; **SNS PREDICT EMAIL ENDPOINT**  &nbsp; 📝
    >
-   > As in previous DE predicts, you will need to ensure that your generated email notifications are being sent to the `edsa.predicts@explore-ai.net` email address.  
+   > As in previous DE predicts, you will need to ensure that your generated email notifications are being sent to the `predicts@sandtech.com` email address.  
 
 ## Part-II: Pipeline assembly 
 [Back to top](#table-of-contents)
