@@ -245,7 +245,7 @@ When creating the data pipeline, you will need to store multiple artefacts for d
          2. **Pandas** to perform the required data manipulation; and
 
          3. **Latest version of the AWS Command Line Interface (CLI)** so that you can interact with AWS services on your EC2 instance. Don't forget to configure your AWS credentials.
-   4. Since you will complete the predict over a few weeks, you may find it useful to set a static IP for your EC2 instance. Otherwise you will have to continously obtain the new IP address that is allocated to your EC2 instance. Static IP Addresses will be created and assigned to you by your facilitation team. You will need to allocate an IP to your instance.
+   4. Since you will complete the predict over a few weeks, you may find it useful to set a static IP for your EC2 instance. Otherwise you will have to continously obtain the new IP address that is allocated to your EC2 instance. Static IP Addresses will be created and assigned to you by your facilitation team. You will need to your facilitator to allocate and attach an IP to your instance.
             
 
 
