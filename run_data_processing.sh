@@ -13,10 +13,10 @@ mkdir -p "${S3_MOUNT_POINT}/Output"
 
 # Mount the S3 bucket (if not already mounted)
 # Replace 'your-s3-bucket-name' with your actual S3 bucket name
-sudo s3fs your-s3-bucket-name "${S3_MOUNT_POINT}" -o iam_role="auto"
+sudo s3fs 2401ft-mbd-predict-sithabiseni-mtshali-s3-source "${S3_MOUNT_POINT}" -o iam_role="auto"
 
 # Download data_processing.py from S3 bucket
-aws s3 cp s3://your-s3-bucket-name/Scripts/data_processing.py /home/ubuntu/data_processing.py
+aws s3 cp s3://2401ft-mbd-predict-sithabiseni-mtshali-s3-source/Scripts/data_processing.py /home/ubuntu/data_processing.py
 
 # Run the Python script
 python3 /home/ubuntu/data_processing.py "${SOURCE_PATH}" "${OUTPUT_PATH}" "${INDEX_FILE_PATH}"
