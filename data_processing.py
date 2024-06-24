@@ -1,7 +1,6 @@
 import pandas as pd
 import os
 import sys
-
 def extract_companies_from_index(index_file_path):
     """Generate a list of company names that need to be processed."""
     with open(index_file_path, "r") as company_file:
@@ -15,7 +14,7 @@ def get_path_to_company_data(list_of_companies, source_data_path):
     """Creates a list of paths to the company data files that will be processed."""
     path_to_company_data = []
     for file_name in list_of_companies:
-        file_path = os.path.join(source_data_path, file_name)  # No need to add .csv here
+        file_path = os.path.join(source_data_path, file_name)
         if os.path.exists(file_path):
             path_to_company_data.append(file_path)
         else:
@@ -61,7 +60,7 @@ def data_processing(company_names, source_data_path, output_path):
     dfs = []
 
     for company in company_names:
-        file_path = os.path.join(source_data_path, company)  # No need to add .csv here
+        file_path = os.path.join(source_data_path, company)
         
         try:
             df = pd.read_csv(file_path)
@@ -96,13 +95,13 @@ def data_processing(company_names, source_data_path, output_path):
     else:
         print("No valid data to save.")
 
+# Extract list of companies from index file
 if __name__ == "__main__":
+    import sys
     source_path = sys.argv[1]
     save_path = sys.argv[2]
     index_file_path = sys.argv[3]
-    
-    # Extract list of companies from index file
+
     company_names = extract_companies_from_index(index_file_path)
-    
-    # Process and save data
+
     data_processing(company_names, source_path, save_path)
