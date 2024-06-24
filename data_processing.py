@@ -32,6 +32,12 @@ def data_processing(source_data_path, output_path, index_file_path):
         
         try:
             df = pd.read_csv(file_path)
+            
+            required_columns = ['stock_date', 'open_value', 'high_value', 'low_value', 'close_value', 'volume_traded']
+            if not all(column in df.columns for column in required_columns):
+                print(f"File {company}.csv is missing required columns.")
+                continue
+            
             df['company_name'] = company  # Add company_name column
             df = calculate_changes(df)   # Calculate additional columns
             dfs.append(df)
