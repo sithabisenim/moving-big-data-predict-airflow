@@ -8,7 +8,7 @@ S3_MOUNT_POINT="/home/ubuntu/s3-drive"
 
 # Define local paths
 LOCAL_SCRIPTS_PATH="$S3_MOUNT_POINT/Scripts"
-LOCAL_OUTPUT_PATH="$S3_MOUNT_POINT/Output"
+LOCAL_OUTPUT_PATH="$S3_MOUNT_POINT/Output/historical_stock_data.csv"  # Specify the output file name
 LOCAL_STOCKS_PATH="$S3_MOUNT_POINT/Stocks"
 LOCAL_INDEX_FILE_PATH="$S3_MOUNT_POINT/CompanyNames/top_companies.txt"
 
