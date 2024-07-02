@@ -30,12 +30,12 @@ dag = DAG(
 
 # SSH and S3 details
 EC2_KEY_PATH = '/home/ubuntu/2401FTDE-SITMTS-ec2-de-mbd-predict-key.pem'
-EC2_HOST = 'ec2-xx-xxx-xxx-xxx.compute-1.amazonaws.com'
+EC2_HOST = 'ec2-52-17-182-138.eu-west-1.compute.amazonaws.com'
 EC2_USERNAME = 'ubuntu'
 MOUNT_SCRIPT = '/home/ubuntu/mount_s3.sh'
 PROCESSING_SCRIPT = '/mnt/s3/Scripts/run_processing.sh'
-S3_BUCKET = 'your-s3-bucket-name'
-SNS_TOPIC_ARN = 'arn:aws:sns:region:account-id:your-sns-topic'
+S3_BUCKET = '2401ft-mbd-predict-sithabiseni-mtshali-s3-source'
+SNS_TOPIC_ARN = 'arn:aws:sns:eu-west-1:445492270995:2401-mbd-predict-Sithabiseni-Mtshali-SNS'
 
 # SSH to EC2 instance and run a command
 def ssh_and_run_script(ssh_host, ssh_user, ssh_key_path, script_path):
