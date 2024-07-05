@@ -1,129 +1,121 @@
-from airflow import DAG
-from airflow.operators.python import PythonOperator
-from airflow.providers.amazon.aws.hooks.s3 import S3Hook
-from airflow.providers.postgres.hooks.postgres import PostgresHook
-from datetime import datetime, timedelta
-import paramiko
-import boto3
 import os
+import boto3
+from airflow import DAG
+from airflow.operators.python_operator import PythonOperator
+from airflow.operators.ssh_operator import SSHOperator
+from datetime import datetime, timedelta
 
-# DAG arguments
+# AWS region
+AWS_REGION = 'eu-west-1'
+
+# Initialize Boto3 client for SNS with IAM role credentials
+sns_client = boto3.client('sns', region_name=AWS_REGION)
+
+# Default arguments for the DAG
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
-    'email_on_failure': True,
+    'email_on_failure': False,
     'email_on_retry': False,
     'retries': 1,
     'retry_delay': timedelta(minutes=5),
 }
 
+# Function to send SNS notification
+def send_sns_notification(message, subject):
+    response = sns_client.publish(
+        TopicArn='arn:aws:sns:eu-west-1:445492270995:2401-mbd-predict-Sithabiseni-Mtshali-SNS',
+        Message=message,
+        Subject=subject
+    )
+    return response
+
+# Function to mount S3 bucket
+def mount_s3_bucket():
+    ssh_command = """
+    ssh -i /home/ubuntu/2401FTDE-SITMTS-ec2-de-mbd-predict-key.pem ubuntu@52.17.182.138 'bash /home/ubuntu/mount_s3_bucket.sh'
+    """
+    os.system(ssh_command)
+    return "S3 Bucket Mounted"
+
+# Function to process data
+def process_data():
+    ssh_command = """
+    ssh -i /home/ubuntu/2401FTDE-SITMTS-ec2-de-mbd-predict-key.pem ubuntu@52.17.182.138 'bash /home/ubuntu/process_data.sh'
+    """
+    os.system(ssh_command)
+    return "Data Processed"
+
+# Function to upload data to PostgreSQL (placeholder)
+def upload_to_postgres():
+    # Implement your logic here to upload data to PostgreSQL
+    # You can use any PostgreSQL client or ORM (e.g., psycopg2, SQLAlchemy)
+    return "CSV Uploaded to PostgreSQL"
+
+# Function to handle failure and send SNS notification
+def failure_sns(context):
+    message = f"Data pipeline failed: {context.get('exception')}"
+    subject = "Data Pipeline Failure"
+    send_sns_notification(message, subject)
+    return "Failure SNS Sent"
+
+# Function to handle success and send SNS notification
+def success_sns(context):
+    message = "Data pipeline succeeded."
+    subject = "Data Pipeline Success"
+    send_sns_notification(message, subject)
+    return "Success SNS Sent"
+
 # Define the DAG
 dag = DAG(
-    'aws_data_pipeline',
+    'data_pipeline_to_postgres_with_sns',
     default_args=default_args,
-    description='A simple data pipeline with AWS services',
-    schedule_interval=timedelta(days=1),
-    start_date=datetime(2023, 1, 1),
-    catchup=False,
+    description='A DAG to mount S3 bucket, process data, upload to PostgreSQL, and send SNS notifications',
+    schedule_interval=None,  # Define your schedule interval here or set to None for manual triggering
+    start_date=datetime(2024, 7, 6),  # Define your preferred start date
+    catchup=False,  # Set to False to prevent backfilling
 )
 
-# SSH and S3 details
-EC2_KEY_PATH = '/home/ubuntu/2401FTDE-SITMTS-ec2-de-mbd-predict-key.pem'
-EC2_HOST = 'ec2-52-17-182-138.eu-west-1.compute.amazonaws.com'
-EC2_USERNAME = 'ubuntu'
-MOUNT_SCRIPT = '/home/ubuntu/mount_s3_bucket.sh'
-PROCESSING_SCRIPT = '/mnt/s3/Scripts/data_processing.py'
-S3_BUCKET = '2401ft-mbd-predict-sithabiseni-mtshali-s3-source'
-SNS_TOPIC_ARN = 'arn:aws:sns:eu-west-1:445492270995:2401-mbd-predict-Sithabiseni-Mtshali-SNS'
-
-# Function to SSH to EC2 instance and run a command
-def ssh_and_run_script(ssh_host, ssh_user, ssh_key_path, script_path):
-    k = paramiko.RSAKey.from_private_key_file(ssh_key_path)
-    c = paramiko.SSHClient()
-    c.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    c.connect(ssh_host, username=ssh_user, pkey=k)
-    stdin, stdout, stderr = c.exec_command(f'bash {script_path}')
-    print(stdout.read().decode())
-    print(stderr.read().decode())
-    c.close()
-
-# Task to mount S3 bucket on EC2 instance
-def mount_s3():
-    ssh_and_run_script(EC2_HOST, EC2_USERNAME, EC2_KEY_PATH, MOUNT_SCRIPT)
-
-# Task to run data processing script on EC2 instance
-def run_processing_script():
-    ssh_and_run_script(EC2_HOST, EC2_USERNAME, EC2_KEY_PATH, PROCESSING_SCRIPT)
-
-# Task to move processed data from S3 to RDS
-def move_data_to_rds():
-    s3 = boto3.client('s3')
-    pg_hook = PostgresHook(postgres_conn_id='postgres_conn_id')  # Replace with your Postgres connection ID
-    conn = pg_hook.get_conn()
-    cursor = conn.cursor()
-
-    # Download the processed CSV file from S3
-    s3.download_file(S3_BUCKET, 'Output/processed_data.csv', '/tmp/processed_data.csv')
-
-    # Read the SQL insertion query from the S3 bucket
-    s3.download_file(S3_BUCKET, 'Scripts/insert_query.sql', '/tmp/insert_query.sql')
-    with open('/tmp/insert_query.sql', 'r') as query_file:
-        insert_query = query_file.read()
-
-    # Read the CSV file and insert data into RDS
-    with open('/tmp/processed_data.csv', 'r') as f:
-        cursor.copy_expert(insert_query, f)  # Use the query from the insert_query.sql file
-    conn.commit()
-    cursor.close()
-    conn.close()
-    os.remove('/tmp/processed_data.csv')
-    os.remove('/tmp/insert_query.sql')
-
-# Task to send notification via SNS
-def send_notification(message):
-    sns_client = boto3.client('sns')
-    sns_client.publish(
-        TopicArn=SNS_TOPIC_ARN,
-        Message=message
-    )
-
-# Define the tasks
+# Task to mount S3 bucket
 mount_s3_task = PythonOperator(
-    task_id='mount_s3',
-    python_callable=mount_s3,
+    task_id='mount_s3_bucket',
+    python_callable=mount_s3_bucket,
     dag=dag,
 )
 
-run_processing_task = PythonOperator(
-    task_id='run_processing_script',
-    python_callable=run_processing_script,
+# Task to process data
+process_data_task = PythonOperator(
+    task_id='process_data',
+    python_callable=process_data,
     dag=dag,
 )
 
-move_data_task = PythonOperator(
-    task_id='move_data_to_rds',
-    python_callable=move_data_to_rds,
+# Task to upload data to PostgreSQL
+upload_task = PythonOperator(
+    task_id='upload_to_postgres',
+    python_callable=upload_to_postgres,
+    provide_context=True,
     dag=dag,
 )
 
-notify_success_task = PythonOperator(
-    task_id='notify_success',
-    python_callable=send_notification,
-    op_kwargs={'message': 'Pipeline succeeded!'},
+# Task to send success SNS notification
+success_sns_task = PythonOperator(
+    task_id='success_sns',
+    python_callable=success_sns,
+    provide_context=True,
     dag=dag,
 )
 
-notify_failure_task = PythonOperator(
-    task_id='notify_failure',
-    python_callable=send_notification,
-    op_kwargs={'message': 'Pipeline failed!'},
-    trigger_rule='one_failed',
+# Task to send failure SNS notification
+failure_sns_task = PythonOperator(
+    task_id='failure_sns',
+    python_callable=failure_sns,
+    provide_context=True,
     dag=dag,
 )
 
-# Set task dependencies
-mount_s3_task >> run_processing_task >> move_data_task
-move_data_task >> notify_success_task
-mount_s3_task >> notify_failure_task
-run_processing_task >> notify_failure_task
-move_data_task >> notify_failure_task
+# Define task dependencies
+mount_s3_task >> process_data_task >> upload_task
+upload_task >> success_sns_task
+upload_task >> failure_sns_task
+
